@@ -395,7 +395,7 @@
                     <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold">
                         <i class="fa-solid fa-user-shield"></i>
                     </div>
-                    <h3 class="font-bold text-slate-800 text-base">고림고 교사 인증센터</h3>
+                    <h3 id="teacherAuthTitle" class="font-bold text-slate-800 text-base">고림고 교사 인증센터</h3>
                 </div>
                 <button onclick="closeTeacherAuthModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -403,14 +403,9 @@
             </div>
 
             <div class="p-6 space-y-4">
-                <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-                    <button id="tabAuthBtn" onclick="switchAuthTab('AUTH')" class="w-1/2 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition">교사 인증</button>
-                    <button id="tabChangeBtn" onclick="switchAuthTab('CHANGE')" class="w-1/2 py-2 rounded-lg text-slate-500 hover:text-indigo-600 transition">비밀번호 변경</button>
-                </div>
-
                 <div id="authArea" class="space-y-4">
                     <div>
-                        <input type="password" id="teacherPinInput" autocomplete="off" spellcheck="false" placeholder="교사 비밀번호 입력 (초기: 1234 · 로그인 후 즉시 변경)" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none" onkeydown="if(event.key==='Enter') verifyTeacherPin()">
+                        <input type="password" id="teacherPinInput" autocomplete="off" spellcheck="false" placeholder="교사 비밀번호 입력" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none" onkeydown="if(event.key==='Enter') verifyTeacherPin()">
                     </div>
                     <div id="authErrorMsg" class="hidden text-xs text-rose-500 font-medium"><i class="fa-solid fa-circle-exclamation mr-1"></i>비밀번호가 일치하지 않습니다.</div>
                     <button onclick="verifyTeacherPin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm py-2.5 rounded-xl shadow-md transition">인증하기</button>
@@ -848,6 +843,11 @@
             }
             return;
         }
+        // 비밀번호 변경은 교사 인증(로그인)된 상태에서만 열 수 있음
+        if (openChangeTab && !isTeacherLoggedIn) {
+            showToast('먼저 교사 인증을 진행해 주세요.');
+            openChangeTab = false;
+        }
         document.getElementById('teacherAuthModal').classList.remove('hidden');
         switchAuthTab(openChangeTab ? 'CHANGE' : 'AUTH');
     }
@@ -862,14 +862,12 @@
     }
 
     function switchAuthTab(tab) {
+        // 로그인되지 않은 상태에서는 비밀번호 변경 화면으로 전환 불가
+        if (tab === 'CHANGE' && !isTeacherLoggedIn) tab = 'AUTH';
         document.getElementById('authArea').classList.toggle('hidden', tab !== 'AUTH');
         document.getElementById('changePinArea').classList.toggle('hidden', tab !== 'CHANGE');
-        document.getElementById('tabAuthBtn').className = tab === 'AUTH'
-            ? 'w-1/2 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition'
-            : 'w-1/2 py-2 rounded-lg text-slate-500 hover:text-indigo-600 transition';
-        document.getElementById('tabChangeBtn').className = tab === 'CHANGE'
-            ? 'w-1/2 py-2 rounded-lg bg-white text-indigo-600 shadow-sm transition'
-            : 'w-1/2 py-2 rounded-lg text-slate-500 hover:text-indigo-600 transition';
+        const title = document.getElementById('teacherAuthTitle');
+        if (title) title.textContent = (tab === 'CHANGE') ? '교사 비밀번호 변경' : '고림고 교사 인증센터';
     }
 
     function forceTeacherLogout(expired) {
